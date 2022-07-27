@@ -1,0 +1,7 @@
+{
+  "console.log shortcut": {
+    "prefix": "cl",
+    "body": ["console.log($0)"],
+    "description": "console.log shortcut"
+  }
+}

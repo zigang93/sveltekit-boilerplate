@@ -1,0 +1,183 @@
+name: Deployments
+
+on:
+  workflow_call:
+    inputs:
+      deploy_target:
+        required: true
+        type: string
+
+jobs:
+  single-build-push-image:
+    if: ${{ inputs.deploy_target != 'staging-and-uat' }}
+    name: Build Single Docker Images And Push AWS Ecr
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Copy .env file base on deploy_target
+        env:
+          SERVER: ${{ inputs.deploy_target }}
+        run: |
+          cp .env.$SERVER .env.production.local
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: dashboard-ui
+          IMAGE_TAG: ${{ inputs.deploy_target }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+  mutiple-build-push-image:
+    if: ${{ inputs.deploy_target == 'staging-and-uat' }}
+    name: Build Multiple Docker Images And Push AWS Ecr
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Copy Staging .env file
+        run: |
+          cp .env.staging .env.production.local
+
+      - name: Build, tag, and push Staging image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: dashboard-ui
+          IMAGE_TAG: staging
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Delete staging env and Copy UAT .env file
+        run: |
+          rm -rf .env.production.local
+          cp .env.uat .env.production.local
+
+      - name: Build, tag, and push UAT image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: dashboard-ui
+          IMAGE_TAG: uat
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+  staging-pull-images:
+    if: ${{ inputs.deploy_target == 'staging' }}
+    name: Pull Images at ec2 staging server
+    needs: single-build-push-image
+    runs-on: ubuntu-latest
+    steps:
+      - name: ssh to aws server and run deployment scripts
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.PRIVATE_SSH_KEY }}
+          script: |
+            bash deployment_script/pull-deploy-dashboard-ui.sh
+
+  uat-pull-images:
+    if: ${{ inputs.deploy_target == 'uat' }}
+    name: Pull Images at ec2 staging server
+    needs: single-build-push-image
+    runs-on: ubuntu-latest
+    steps:
+      - name: ssh to penta uat server and run deployment scripts
+        uses: appleboy/ssh-action@master
+        with:
+          proxy_host: ${{ secrets.PROXY_JUMP_HOST }}
+          proxy_username: ${{ secrets.PROXY_JUMP_USER }}
+          proxy_key: ${{ secrets.LOCAL_PRIVATE_SSH_KEY }}
+          proxy_port: ${{ secrets.PROXY_HOST_PORT }}
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.PRIVATE_PROXY_JUMP_SSH_KEY }}
+          port: ${{ secrets.JUMP_HOST_TUNNEL_PORT }}
+          script: |
+            source ~/.bash_profile
+            bash deployment_script/pull-deploy-dashboard-ui.sh
+
+  staging-and-uat-pull-images:
+    if: ${{ inputs.deploy_target == 'staging-and-uat' }}
+    name: Pull Images at staging and uat server
+    needs: mutiple-build-push-image
+    runs-on: ubuntu-latest
+    steps:
+      - name: ssh to staging server and run deployment scripts
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.PRIVATE_SSH_KEY }}
+          script: |
+            bash deployment_script/pull-deploy-dashboard-ui.sh
+            exit
+
+      - name: ssh to penta uat server and run deployment scripts
+        uses: appleboy/ssh-action@master
+        with:
+          proxy_host: ${{ secrets.PROXY_JUMP_HOST }}
+          proxy_username: ${{ secrets.PROXY_JUMP_USER }}
+          proxy_key: ${{ secrets.LOCAL_PRIVATE_SSH_KEY }}
+          proxy_port: ${{ secrets.PROXY_HOST_PORT }}
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.PRIVATE_PROXY_JUMP_SSH_KEY }}
+          port: ${{ secrets.JUMP_HOST_TUNNEL_PORT }}
+          script: |
+            source ~/.bash_profile
+            bash deployment_script/pull-deploy-dashboard-ui.sh
+
+  notification:
+    needs: [staging-pull-images, uat-pull-images, staging-and-uat-pull-images]
+    if: ${{ always() && contains(needs.*.result, 'success') && !(contains(needs.*.result, 'failure')) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Extract version
+        id: extract_version
+        uses: Saionaro/extract-package-version@v1.0.6
+
+      - name: Notify dedicated teams channel
+        uses: jdcargile/ms-teams-notification@v1.3
+        with:
+          github-token: ${{ github.token }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: 'Success deployment ${{ github.repository }} (version: ${{ steps.extract_version.outputs.version }}) at ${{ inputs.deploy_target }} was started by ${{ github.actor }}.'
+          notification-color: 28a745
+          timezone: Asia/Kuala_Lumpur
