@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Button from '../components/Button.svelte'
+
   type TSiteInfo = {
     name: string
   }
@@ -16,6 +18,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Home</title>
+</svelte:head>
+
 <div class="wrapper">
   <h1>Welcome to {info.name}</h1>
   <p>
@@ -25,7 +31,7 @@
     class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
     on:click={() => handleClick()}>change site name</button
   >
-  <button class="btn btn-blue" on:click={() => handleClick('svelte')}>change back name</button>
+  <Button title="change back title" onClick={() => handleClick('svelte')} />
 </div>
 
 <style lang="scss">
@@ -33,15 +39,5 @@
     h1 {
       color: salmon;
     }
-  }
-
-  .btn {
-    @apply font-bold py-2 px-4 rounded;
-  }
-  .btn-blue {
-    @apply bg-blue-500 text-white;
-  }
-  .btn-blue:hover {
-    @apply bg-blue-700;
   }
 </style>
