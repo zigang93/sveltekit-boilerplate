@@ -20,3 +20,21 @@ pnpm run build
 ```
 
 You can preview the production build with `pnpm run preview`.
+
+## Docker Build
+
+```bash
+docker build -t my-app .
+```
+
+## Docker Run
+
+```bash
+docker run --name my-app -p 4000:3000 my-app
+```
+
+## Stop and Remove all docker image
+
+```bash
+docker stop my-app && docker rm my-app && docker rmi my-app
+```
