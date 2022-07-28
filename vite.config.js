@@ -7,9 +7,13 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: 'src/test/setup.ts',
+    setupFiles: 'src/tests/setup.ts',
     clearMocks: true,
     mockReset: true,
+    exclude: ['./e2e'],
+  },
+  server: {
+    port: 3000,
   },
   resolve: {
     alias: {
