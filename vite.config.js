@@ -12,9 +12,9 @@ export default defineConfig({
     mockReset: true,
     exclude: ['./e2e'],
   },
-  server: {
-    port: 3000,
-  },
+  // server: {
+  //   port: 3000,
+  // },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),

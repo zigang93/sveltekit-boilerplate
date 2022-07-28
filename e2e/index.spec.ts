@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test'
 
-test('homepage has Welcome title', async ({ page }) => {
-  await page.goto('https://playwright.dev/')
+test('homepage has Home title', async ({ page }) => {
+  await page.goto('http://127.0.0.1:5173/')
 
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Welcome/)
+  // Expect page title "to contain" a substring.
+  await expect(page).toHaveTitle(/Home/)
 })
