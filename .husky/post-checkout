@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-if [ HEAD = main ]; then echo "auto fetch latest commit.." && git pull origin main; fi
+if [ $(git rev-parse --abbrev-ref HEAD) = main ]; then echo "auto fetch latest commit.." && git pull origin main; fi
