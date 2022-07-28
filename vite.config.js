@@ -7,7 +7,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['vitest.setup.ts'],
+    setupFiles: 'src/test/setup.ts',
+    clearMocks: true,
+    mockReset: true,
   },
   resolve: {
     alias: {

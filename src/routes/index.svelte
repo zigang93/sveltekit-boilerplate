@@ -27,17 +27,6 @@
   <p>
     Visit <a href="https://kit.svelte.dev">kit.svelte.dev </a>to read the documentation
   </p>
-  <button
-    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-    on:click={() => handleClick()}>change site name</button
-  >
+  <Button title="change site title" onClick={() => handleClick()} />
   <Button title="change back title" onClick={() => handleClick('svelte')} />
 </div>
-
-<style lang="scss">
-  .wrapper {
-    h1 {
-      color: salmon;
-    }
-  }
-</style>

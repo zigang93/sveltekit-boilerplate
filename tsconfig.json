@@ -10,9 +10,8 @@
     "sourceMap": true,
     "strict": true,
     "types": ["vitest/globals"],
-    "baseUrl": "./src",
     "paths": {
-      "@/*": ["*"]
+      "@/*": ["./src/*"]
     }
   }
 }
