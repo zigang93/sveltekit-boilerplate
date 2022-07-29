@@ -2,7 +2,17 @@
 
 ## Developing
 
-Once you've created a project and installed dependencies with `pnpm install`, start a development server:
+Once you've created a project and installed dependencies with `pnpm install` ( remember run `corepack enable` for the first time), start a development server:
+
+```bash
+corepack enable
+```
+
+Install PlayWright for E2E testing framework
+
+```bash
+npx playwright install
+```
 
 ```bash
 pnpm run dev

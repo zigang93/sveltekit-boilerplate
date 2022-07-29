@@ -10,7 +10,7 @@ export default defineConfig({
     setupFiles: 'src/tests/setup.ts',
     clearMocks: true,
     mockReset: true,
-    exclude: ['./e2e'],
+    exclude: ['node_modules', './e2e'],
   },
   // server: {
   //   port: 3000,
