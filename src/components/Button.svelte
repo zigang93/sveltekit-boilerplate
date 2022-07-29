@@ -1,4 +1,4 @@
-<script lang="ts">
+<script>
   export let title: string
   export let onClick: () => void
 </script>
@@ -15,4 +15,12 @@
   .btn-blue:hover {
     @apply bg-blue-700;
   }
+
+  // $font-stack: Helvetica, sans-serif;
+  // $primary-color: #333;
+
+  // body {
+  //   font: 100% $font-stack;
+  //   color: $primary-color;
+  // }
 </style>

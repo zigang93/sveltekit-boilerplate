@@ -7,8 +7,11 @@ const config = {
   // for more information about preprocessors
   preprocess: preprocess({
     postcss: true,
+    defaults: {
+      script: 'typescript',
+      style: 'scss',
+    },
   }),
-
   kit: {
     adapter: adapter({ out: 'build' }),
   },

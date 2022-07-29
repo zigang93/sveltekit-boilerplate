@@ -1,4 +1,4 @@
-<script lang="ts">
+<script>
   import Button from '@/components/Button.svelte'
 
   type TSiteInfo = {
