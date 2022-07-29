@@ -67,5 +67,6 @@
       "path": "cz-conventional-changelog"
     }
   },
-  "packageManager": "pnpm@7.3.0"
+  "packageManager": "pnpm@7.3.0",
+  "license": "MIT"
 }
