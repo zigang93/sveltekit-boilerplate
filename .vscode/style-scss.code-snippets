@@ -1,0 +1,7 @@
+{
+  "script with style lang": {
+    "prefix": "st",
+    "body": ["<style lang=\"scss\">", "$0", "</style>"],
+    "description": "style with scss lang"
+  }
+}
